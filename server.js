@@ -23,9 +23,38 @@ connectDB();
 // Middleware
 // CORS configuration
 const corsOptions = {
-  origin: process.env.NODE_ENV === 'production' 
-    ? [process.env.CORS_ORIGIN, 'https://your-frontend-domain.vercel.app']
-    : ['http://localhost:3000', 'http://localhost:3001', 'http://localhost:3002', 'http://localhost:3003'],
+  origin: function (origin, callback) {
+    const allowedOrigins = [
+      'https://book-bazaar-frontend-new.vercel.app',
+      'https://book-bazaar-frontend-new-1.vercel.app',
+      'https://book-bazaar-frontend-new-2.vercel.app',
+      'https://book-bazaar-frontend-new-3.vercel.app',
+      'https://book-bazaar-frontend-new-4.vercel.app',
+      'https://book-bazaar-frontend-new-5.vercel.app',
+      'https://book-bazaar-frontend-new-6.vercel.app',
+      'https://book-bazaar-frontend-new-7.vercel.app',
+      'https://book-bazaar-frontend-new-8.vercel.app',
+      'https://book-bazaar-frontend-new-9.vercel.app',
+      'http://localhost:3000',
+      'http://localhost:3001',
+      'http://localhost:3002',
+      'http://localhost:3003',
+      process.env.CLIENT_URL,
+      process.env.CORS_ORIGIN
+    ].filter(Boolean);
+    
+    // Allow requests with no origin (mobile apps, curl, postman)
+    if (!origin) return callback(null, true);
+    
+    // Check if origin is in allowed list or matches Vercel pattern
+    if (allowedOrigins.includes(origin) || 
+        origin.includes('vercel.app') || 
+        origin.includes('localhost')) {
+      return callback(null, true);
+    }
+    
+    callback(new Error('Not allowed by CORS'));
+  },
   credentials: true,
   methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
   allowedHeaders: ['Content-Type', 'Authorization']
@@ -92,9 +121,36 @@ const server = http.createServer(app);
 // Socket.IO setup with production CORS
 const io = new Server(server, {
   cors: {
-    origin: process.env.NODE_ENV === 'production' 
-      ? [process.env.CORS_ORIGIN, 'https://your-frontend-domain.vercel.app']
-      : ['http://localhost:3000', 'http://localhost:3001', 'http://localhost:3002', 'http://localhost:3003'],
+    origin: function (origin, callback) {
+      const allowedOrigins = [
+        'https://book-bazaar-frontend-new.vercel.app',
+        'https://book-bazaar-frontend-new-1.vercel.app',
+        'https://book-bazaar-frontend-new-2.vercel.app',
+        'https://book-bazaar-frontend-new-3.vercel.app',
+        'https://book-bazaar-frontend-new-4.vercel.app',
+        'https://book-bazaar-frontend-new-5.vercel.app',
+        'https://book-bazaar-frontend-new-6.vercel.app',
+        'https://book-bazaar-frontend-new-7.vercel.app',
+        'https://book-bazaar-frontend-new-8.vercel.app',
+        'https://book-bazaar-frontend-new-9.vercel.app',
+        'http://localhost:3000',
+        'http://localhost:3001',
+        'http://localhost:3002',
+        'http://localhost:3003',
+        process.env.CLIENT_URL,
+        process.env.CORS_ORIGIN
+      ].filter(Boolean);
+      
+      if (!origin) return callback(null, true);
+      
+      if (allowedOrigins.includes(origin) || 
+          origin.includes('vercel.app') || 
+          origin.includes('localhost')) {
+        return callback(null, true);
+      }
+      
+      callback(new Error('Not allowed by CORS'));
+    },
     methods: ["GET", "POST"]
   }
 });
