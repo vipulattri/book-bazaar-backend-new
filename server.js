@@ -21,7 +21,17 @@ const app = express();
 connectDB();
 
 // Middleware
-app.use(cors());
+// CORS configuration
+const corsOptions = {
+  origin: process.env.NODE_ENV === 'production' 
+    ? [process.env.CORS_ORIGIN, 'https://your-frontend-domain.vercel.app']
+    : ['http://localhost:3000', 'http://localhost:3001', 'http://localhost:3002', 'http://localhost:3003'],
+  credentials: true,
+  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
+  allowedHeaders: ['Content-Type', 'Authorization']
+};
+
+app.use(cors(corsOptions));
 app.use(express.json());
 app.use(passport.initialize());
 
@@ -57,13 +67,34 @@ app.use('/api/messages', messageRoutes);
 app.use('/api/wishlist', wishlistRoutes);
 app.use('/api/admin', adminRoutes);
 
+// Health check endpoint
+app.get('/health', (req, res) => {
+  res.json({
+    status: 'OK',
+    timestamp: new Date().toISOString(),
+    environment: process.env.NODE_ENV || 'development',
+    uptime: process.uptime()
+  });
+});
+
+// Root endpoint
+app.get('/', (req, res) => {
+  res.json({
+    message: 'Book Marketplace API',
+    status: 'Running',
+    version: '1.0.0'
+  });
+});
+
 // Create HTTP server
 const server = http.createServer(app);
 
-// Socket.IO setup
+// Socket.IO setup with production CORS
 const io = new Server(server, {
   cors: {
-    origin: "*",
+    origin: process.env.NODE_ENV === 'production' 
+      ? [process.env.CORS_ORIGIN, 'https://your-frontend-domain.vercel.app']
+      : ['http://localhost:3000', 'http://localhost:3001', 'http://localhost:3002', 'http://localhost:3003'],
     methods: ["GET", "POST"]
   }
 });
@@ -85,11 +116,24 @@ io.on('connection', (socket) => {
     socket.join(room);
     console.log(`Socket ${socket.id} joined personal room ${room}`);
   }
-  // ========= Simple buyer-seller chat rooms =========
+  // ========= Enhanced buyer-seller chat rooms =========
   socket.on('chat:join', ({ conversationId }) => {
     if (!conversationId) return;
     socket.join(conversationId);
     socket.emit('chat:joined', { conversationId });
+    console.log(`Socket ${socket.id} joined conversation ${conversationId}`);
+  });
+
+  socket.on('chat:leave', ({ conversationId }) => {
+    if (!conversationId) return;
+    socket.leave(conversationId);
+    socket.emit('chat:left', { conversationId });
+    console.log(`Socket ${socket.id} left conversation ${conversationId}`);
+  });
+
+  socket.on('chat:typing', ({ conversationId, userId, isTyping }) => {
+    if (!conversationId || !userId) return;
+    socket.to(conversationId).emit('chat:typing', { userId, isTyping });
   });
 
   socket.on('chat:message', ({ conversationId, message, senderId, senderName }) => {
@@ -103,6 +147,21 @@ io.on('connection', (socket) => {
       timestamp: new Date().toISOString()
     };
     io.to(conversationId).emit('chat:message', payload);
+  });
+
+  // Handle online status
+  socket.on('user:online', ({ userId }) => {
+    if (userId) {
+      socket.join(`user:${userId}`);
+      socket.broadcast.emit('user:status', { userId, status: 'online' });
+    }
+  });
+
+  socket.on('user:offline', ({ userId }) => {
+    if (userId) {
+      socket.leave(`user:${userId}`);
+      socket.broadcast.emit('user:status', { userId, status: 'offline' });
+    }
   });
 
   // ===============================
@@ -344,6 +403,16 @@ app.get('/status', (req, res) => {
     status: 'Server running',
     rooms: Object.keys(rooms).length,
     videoChatUsers: videoChatUsers.size,
+    timestamp: new Date().toISOString()
+  });
+});
+
+// Test endpoint for messages
+app.post('/api/messages/test', (req, res) => {
+  console.log('Test message endpoint hit:', req.body);
+  res.json({ 
+    message: 'Test endpoint working',
+    received: req.body,
     timestamp: new Date().toISOString()
   });
 });

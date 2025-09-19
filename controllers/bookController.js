@@ -71,6 +71,35 @@ export const updateBook = async (req, res) => {
   }
 };
 
+export const searchBooks = async (req, res) => {
+  try {
+    const { q, limit = 5 } = req.query;
+    
+    if (!q || q.trim().length < 2) {
+      return res.json([]);
+    }
+    
+    const searchQuery = q.trim();
+    const regex = new RegExp(searchQuery, 'i');
+    
+    const books = await Book.find({
+      $or: [
+        { title: regex },
+        { author: regex },
+        { genre: regex },
+        { subject: regex }
+      ]
+    })
+    .select('_id title author genre subject price image')
+    .limit(parseInt(limit))
+    .sort({ createdAt: -1 });
+    
+    res.json(books);
+  } catch (error) {
+    res.status(500).json({ message: 'Error searching books', error: error.message });
+  }
+};
+
 export const deleteBook = async (req, res) => {
   try {
     await Book.findByIdAndDelete(req.params.id);

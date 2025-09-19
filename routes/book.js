@@ -3,7 +3,8 @@ import {
   createBook,
   deleteBook,
   getBooks,
-  updateBook
+  updateBook,
+  searchBooks
 } from '../controllers/bookController.js';
 
 import { protect } from '../middlewares/authMiddleware.js';
@@ -13,6 +14,9 @@ const router = express.Router();
 
 // ✅ Public route to fetch all books
 router.get('/', getBooks);
+
+// ✅ Public route to search books
+router.get('/search', searchBooks);
 
 // ✅ Protected route to create a book with image (using multer)
 router.post('/', protect, upload.single('image'), createBook);
