@@ -1,6 +1,6 @@
 // Simple test to verify messaging works between buyer and seller
 
-const API_URL = 'http://localhost:5000';
+const API_URL = 'https://book-bazaar-backend-new-1.onrender.com';
 
 async function testMessaging() {
   try {

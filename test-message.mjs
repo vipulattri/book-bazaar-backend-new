@@ -3,7 +3,7 @@ const testMessage = async () => {
     console.log('Testing message functionality...');
     
     // Login first to get token and user info
-    const loginResponse = await fetch('http://localhost:5000/api/auth/login', {
+    const loginResponse = await fetch('https://book-bazaar-backend-new-1.onrender.com/api/auth/login', {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
@@ -41,7 +41,7 @@ const testMessage = async () => {
 
     console.log('Message payload:', messagePayload);
 
-    const messageResponse = await fetch('http://localhost:5000/api/messages', {
+    const messageResponse = await fetch('https://book-bazaar-backend-new-1.onrender.com/api/messages', {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
@@ -64,7 +64,7 @@ const testMessage = async () => {
 
     // Test fetching messages
     console.log('\n🔄 Testing message retrieval...');
-    const fetchResponse = await fetch(`http://localhost:5000/api/messages/${messagePayload.conversationId}`, {
+    const fetchResponse = await fetch(`https://book-bazaar-backend-new-1.onrender.com/api/messages/${messagePayload.conversationId}`, {
       method: 'GET',
       headers: {
         'Authorization': `Bearer ${token}`

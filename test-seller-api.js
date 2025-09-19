@@ -7,7 +7,7 @@ const testSellerAPI = async () => {
     console.log('🔍 Testing seller conversation API...');
 
     // First, login as seller to get token
-    const loginResponse = await fetch('http://localhost:5000/api/auth/login', {
+    const loginResponse = await fetch('https://book-bazaar-backend-new-1.onrender.com/api/auth/login', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
@@ -28,7 +28,7 @@ const testSellerAPI = async () => {
     const token = sellerData.token;
 
     // Test the conversations API
-    const conversationsResponse = await fetch(`http://localhost:5000/api/messages/conversations/user/${sellerId}`, {
+    const conversationsResponse = await fetch(`https://book-bazaar-backend-new-1.onrender.com/api/messages/conversations/user/${sellerId}`, {
       headers: { 'Authorization': `Bearer ${token}` }
     });
 

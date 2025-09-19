@@ -3,7 +3,7 @@ const testMessage = async () => {
   try {
     // Test user login first
     console.log('Testing user login...');
-    const loginResponse = await fetch('http://localhost:5000/api/auth/login', {
+    const loginResponse = await fetch('https://book-bazaar-backend-new-1.onrender.com/api/auth/login', {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
@@ -29,7 +29,7 @@ const testMessage = async () => {
 
     // Test sending a message
     console.log('\nTesting message sending...');
-    const messageResponse = await fetch('http://localhost:5000/api/messages', {
+    const messageResponse = await fetch('https://book-bazaar-backend-new-1.onrender.com/api/messages', {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',

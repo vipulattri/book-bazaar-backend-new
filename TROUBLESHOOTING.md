@@ -23,7 +23,7 @@ This will test:
 
 #### Test Health Check (No Auth Required)
 ```bash
-curl http://localhost:5000/api/messages/health
+curl https://book-bazaar-backend-new-1.onrender.com/api/messages/health
 ```
 
 Expected response:
@@ -39,7 +39,7 @@ Expected response:
 
 #### Test Message Endpoint (No Auth Required)
 ```bash
-curl -X POST http://localhost:5000/api/messages/test \
+curl -X POST https://book-bazaar-backend-new-1.onrender.com/api/messages/test \
   -H "Content-Type: application/json" \
   -d '{"test": "data"}'
 ```

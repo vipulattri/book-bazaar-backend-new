@@ -3,13 +3,13 @@ const testLogin = async () => {
     console.log('Testing API connection...');
     
     // First check if the server is running
-    const healthResponse = await fetch('http://localhost:5000/api/messages/health');
+    const healthResponse = await fetch('https://book-bazaar-backend-new-1.onrender.com/api/messages/health');
     const healthData = await healthResponse.json();
     console.log('Health check:', healthData);
     
     // Test registration first
     console.log('\nTesting user registration...');
-    const registerResponse = await fetch('http://localhost:5000/api/auth/register', {
+    const registerResponse = await fetch('https://book-bazaar-backend-new-1.onrender.com/api/auth/register', {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
@@ -34,7 +34,7 @@ const testLogin = async () => {
 
     // Test login
     console.log('\nTesting user login...');
-    const loginResponse = await fetch('http://localhost:5000/api/auth/login', {
+    const loginResponse = await fetch('https://book-bazaar-backend-new-1.onrender.com/api/auth/login', {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',

@@ -5,7 +5,7 @@ const createRealConversation = async () => {
     console.log('Creating a real buyer account...');
     
     // Create a buyer account
-    const buyerRegister = await fetch('http://localhost:5000/api/auth/register', {
+    const buyerRegister = await fetch('https://book-bazaar-backend-new-1.onrender.com/api/auth/register', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
@@ -24,7 +24,7 @@ const createRealConversation = async () => {
       console.log('✅ Buyer account created');
     } else {
       // Try to login if account already exists
-      const buyerLogin = await fetch('http://localhost:5000/api/auth/login', {
+      const buyerLogin = await fetch('https://book-bazaar-backend-new-1.onrender.com/api/auth/login', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -42,7 +42,7 @@ const createRealConversation = async () => {
     }
 
     // Login as seller to get their info
-    const sellerLogin = await fetch('http://localhost:5000/api/auth/login', {
+    const sellerLogin = await fetch('https://book-bazaar-backend-new-1.onrender.com/api/auth/login', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
@@ -59,7 +59,7 @@ const createRealConversation = async () => {
     console.log('✅ Seller logged in');
 
     // Get seller's books to find a real book ID
-    const booksResponse = await fetch(`http://localhost:5000/api/books?userId=${sellerData.user.id}`, {
+    const booksResponse = await fetch(`https://book-bazaar-backend-new-1.onrender.com/api/books?userId=${sellerData.user.id}`, {
       headers: { 'Authorization': `Bearer ${sellerData.token}` }
     });
 
@@ -91,7 +91,7 @@ const createRealConversation = async () => {
 
     console.log('Sending message:', messageData);
 
-    const messageResponse = await fetch('http://localhost:5000/api/messages', {
+    const messageResponse = await fetch('https://book-bazaar-backend-new-1.onrender.com/api/messages', {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
