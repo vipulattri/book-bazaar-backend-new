@@ -1,5 +1,4 @@
 import Book from '../models/Book.js';
-import Book from '../models/Book.js';
 import cloudinary from '../utils/cloudinary.js';
 import fs from 'fs';
 
@@ -101,49 +100,135 @@ export const getBooks = async (req, res) => {
 
 export const createBook = async (req, res) => {
   try {
+    console.log('📝 Creating new book...');
+    console.log('📁 Request body:', req.body);
+    console.log('🖼️ File info:', req.file ? { filename: req.file.filename, size: req.file.size } : 'No file');
+    
     let imageUrl = '';
 
     // Upload to Cloudinary if file exists
     if (req.file) {
-      const result = await cloudinary.uploader.upload(req.file.path, {
-        folder: 'books',
-      });
-      imageUrl = result.secure_url;
+      try {
+        console.log('☁️ Uploading to Cloudinary...');
+        
+        // Test Cloudinary connection first
+        try {
+          await cloudinary.api.ping();
+        } catch (pingError) {
+          throw new Error('Cloudinary credentials are invalid. Please check your configuration.');
+        }
+        
+        const result = await cloudinary.uploader.upload(req.file.path, {
+          folder: 'book-marketplace',
+          transformation: [
+            { width: 500, height: 600, crop: 'limit' },
+            { quality: 'auto' },
+            { format: 'auto' }
+          ]
+        });
+        
+        imageUrl = result.secure_url;
+        console.log('✅ Cloudinary upload successful:', imageUrl);
 
-      // Optionally delete the local file to clean up
-      fs.unlinkSync(req.file.path);
+        // Clean up local file
+        try {
+          fs.unlinkSync(req.file.path);
+          console.log('🗑️ Local file cleaned up');
+        } catch (cleanupError) {
+          console.warn('⚠️ Could not delete local file:', cleanupError.message);
+        }
+      } catch (cloudinaryError) {
+        console.error('❌ Cloudinary upload failed:', cloudinaryError);
+        
+        // FALLBACK: Use local file path if Cloudinary fails
+        if (req.file && req.file.filename) {
+          imageUrl = `/uploads/${req.file.filename}`;
+          console.log('🔄 Fallback: Using local file path:', imageUrl);
+        }
+        
+        // Log the error but don't fail the request
+        console.warn('⚠️ Book will be created with local image path due to Cloudinary error');
+      }
     }
 
-    // ✅ Destructure all required fields
-    const { title, author, genre, price, condition, address, phone, subject } = req.body;
+    // Extract and validate fields
+    const { 
+      title, 
+      author, 
+      genre, 
+      price, 
+      condition, 
+      Address,  // Note: capital A to match frontend
+      phone, 
+      Subject,  // Note: capital S to match frontend
+      description,
+      isDonation,
+      name,
+      email
+    } = req.body;
 
-    // Minimal validation: require at least title or author
+    // Validation: require at least title or author
     if (!title && !author) {
-      return res.status(400).json({ message: 'Please provide a title or an author' });
+      return res.status(400).json({ 
+        message: 'Please provide either a book title or author name' 
+      });
     }
 
-    const book = await Book.create({
-      title,
-      author,
-      genre,
-      price: Number(price) || 0,
-      condition,
-      image: imageUrl,
-      address,
-      phone,
-      subject,
-      userId: req.user?.id,
-      name: req.user?.username,
-      email: req.user?.email
-    });
+    // Validation: require contact information
+    if (!Address || !phone) {
+      return res.status(400).json({ 
+        message: 'Please provide your address and phone number' 
+      });
+    }
 
-    res.status(201).json(book);
+    // Create book object
+    const bookData = {
+      title: title?.trim() || '',
+      author: author?.trim() || '',
+      genre: genre || 'General',
+      price: isDonation === 'true' ? 0 : (Number(price) || 0),
+      condition: condition || 'Good',
+      image: imageUrl,
+      Address: Address?.trim(),
+      phone: phone?.trim(),
+      Subject: Subject?.trim() || '',
+      description: description?.trim() || '',
+      isDonation: isDonation === 'true',
+      userId: req.user?.id,
+      name: name?.trim() || req.user?.username || '',
+      email: email?.trim() || req.user?.email || ''
+    };
+
+    console.log('💾 Creating book with data:', bookData);
+
+    const book = await Book.create(bookData);
+    
+    console.log('✅ Book created successfully:', book._id);
+    
+    // Populate user info for response
+    const populatedBook = await Book.findById(book._id).populate('userId', 'username email');
+    
+    res.status(201).json({
+      message: 'Book created successfully',
+      book: populatedBook
+    });
+    
   } catch (error) {
     console.error('❌ Error in createBook:', error);
+    
+    // Clean up uploaded file if it exists and creation failed
+    if (req.file && req.file.path) {
+      try {
+        fs.unlinkSync(req.file.path);
+      } catch (cleanupError) {
+        console.error('❌ Failed to cleanup file:', cleanupError);
+      }
+    }
+    
     res.status(500).json({
       message: 'Error creating book',
       error: error.message,
-      stack: error.stack
+      details: process.env.NODE_ENV === 'development' ? error.stack : undefined
     });
   }
 };

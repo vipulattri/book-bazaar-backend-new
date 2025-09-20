@@ -64,6 +64,9 @@ app.use(cors(corsOptions));
 app.use(express.json());
 app.use(passport.initialize());
 
+// Serve static files from uploads directory
+app.use('/uploads', express.static('uploads'));
+
 // Passport Google Strategy
 passport.use(new GoogleStrategy({
   clientID: process.env.GOOGLE_CLIENT_ID,
