@@ -103,23 +103,69 @@ export const checkAuth = async (req, res) => {
 // Google OAuth Controllers
 // =========================
 
-export const googleAuth = passport.authenticate('google', {
-  scope: ['profile', 'email'],
-  prompt: 'select_account'
-});
+export const googleAuth = (req, res, next) => {
+  // Store the referrer so we can redirect back to the correct domain
+  const referer = req.get('Referer')
+  if (referer) {
+    req.session = req.session || {}
+    req.session.authReferer = referer
+  }
+  
+  passport.authenticate('google', {
+    scope: ['profile', 'email'],
+    prompt: 'select_account'
+  })(req, res, next)
+}
 
 export const googleCallback = (req, res, next) => {
   passport.authenticate('google', { session: false }, async (err, profileUser) => {
     try {
-      if (err) return res.redirect(`${process.env.CLIENT_URL || 'http://localhost:3000'}/login?error=oauth_failed`);
-      if (!profileUser) return res.redirect(`${process.env.CLIENT_URL || 'http://localhost:3000'}/login?error=no_profile`);
+      if (err) {
+        console.error('Google OAuth error:', err)
+        return res.redirect(`${getClientUrl(req)}/login?error=oauth_failed`)
+      }
+      if (!profileUser) {
+        console.error('No profile returned from Google')
+        return res.redirect(`${getClientUrl(req)}/login?error=no_profile`)
+      }
 
       // Issue JWT and redirect to frontend with token
-      const token = generateToken(profileUser);
-      const redirectUrl = `${process.env.CLIENT_URL || 'http://localhost:3000'}/auth/callback?token=${encodeURIComponent(token)}`;
-      return res.redirect(redirectUrl);
+      const token = generateToken(profileUser)
+      const redirectUrl = `${getClientUrl(req)}/auth/callback?token=${encodeURIComponent(token)}`
+      console.log('Redirecting to:', redirectUrl)
+      return res.redirect(redirectUrl)
     } catch (e) {
-      return res.redirect(`${process.env.CLIENT_URL || 'http://localhost:3000'}/login?error=server_error`);
+      console.error('OAuth callback error:', e)
+      return res.redirect(`${getClientUrl(req)}/login?error=server_error`)
     }
-  })(req, res, next);
-};
+  })(req, res, next)
+}
+
+// Helper function to determine the correct client URL
+function getClientUrl(req) {
+  // List of allowed frontend domains
+  const allowedDomains = [
+    'https://book-bazaar-frontend-lilac.vercel.app',
+    'https://book-bazaar-frontend-new.vercel.app',
+    'https://book-bazaar-frontend-new-1.vercel.app',
+    'https://book-bazaar-frontend-new-2.vercel.app',
+    'https://book-bazaar-frontend-new-3.vercel.app',
+    'http://localhost:3000',
+    'http://localhost:3001',
+    'http://localhost:3002',
+    'http://localhost:3003'
+  ]
+  
+  // Check if there's a specific client URL in the request (from state parameter or referer)
+  const referer = req.get('Referer')
+  if (referer) {
+    for (const domain of allowedDomains) {
+      if (referer.startsWith(domain)) {
+        return domain
+      }
+    }
+  }
+  
+  // Fallback to environment variable or default
+  return process.env.CLIENT_URL || 'https://book-bazaar-frontend-lilac.vercel.app'
+}
